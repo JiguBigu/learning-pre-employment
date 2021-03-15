@@ -16,7 +16,6 @@
         <module>hessian-api</module>
         <module>hessian-web</module>
         <module>hessian-service</module>
-        <module>hessian-util</module>
     </modules>
 
 </project>

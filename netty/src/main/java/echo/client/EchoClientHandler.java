@@ -31,6 +31,34 @@ public class EchoClientHandler extends SimpleChannelInboundHandler<ByteBuf> {
         }
     }
 
+//    /**
+//     * 方法会在接收到数据时被调用。
+//     * 注意，由服务器所发送的消息可以以块的形式被接收。
+//     * 即，当服务器发送 5 个字节是不是保证所有的 5 个字节会立刻收到
+//     * 即使是只有 5 个字节，channelRead0() 方法可被调用两次，
+//     * 第一次用一个ByteBuf（Netty的字节容器）装载3个字节和第二次一个 ByteBuf 装载 2 个字节。
+//     * 唯一要保证的是，该字节将按照它们发送的顺序分别被接收(TCP 协议的可靠性）
+//     * @param channelHandlerContext
+//     * @param byteBuf
+//     * @throws Exception
+//     */
+//    @Override
+//    protected void messageReceived(ChannelHandlerContext channelHandlerContext, ByteBuf byteBuf) throws Exception {
+//        //打印客户端接收到的消息
+//        System.out.println("Client received: " + byteBuf.toString(CharsetUtil.UTF_8));
+//    }
+
+    /**
+     * 记录错误日志并关闭channel
+     * @param context
+     * @param cause
+     */
+    @Override
+    public void exceptionCaught(ChannelHandlerContext context, Throwable cause) {
+        cause.printStackTrace();
+        context.close();
+    }
+
     /**
      * 方法会在接收到数据时被调用。
      * 注意，由服务器所发送的消息可以以块的形式被接收。
@@ -46,16 +74,5 @@ public class EchoClientHandler extends SimpleChannelInboundHandler<ByteBuf> {
     protected void channelRead0(ChannelHandlerContext channelHandlerContext, ByteBuf byteBuf) throws Exception {
         //打印客户端接收到的消息
         System.out.println("Client received: " + byteBuf.toString(CharsetUtil.UTF_8));
-    }
-
-    /**
-     * 记录错误日志并关闭channel
-     * @param context
-     * @param cause
-     */
-    @Override
-    public void exceptionCaught(ChannelHandlerContext context, Throwable cause) {
-        cause.printStackTrace();
-        context.close();
     }
 }
