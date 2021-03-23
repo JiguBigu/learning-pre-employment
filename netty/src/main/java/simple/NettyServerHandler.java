@@ -7,6 +7,7 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.util.CharsetUtil;
 
 import java.nio.ByteBuffer;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Jigubigu
@@ -24,6 +25,35 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
         ByteBuf message = (ByteBuf) msg;
         System.out.println("server received: " + message.toString(CharsetUtil.UTF_8));
         System.out.println("客户端地址是:" + ctx.channel().remoteAddress());
+
+        // 比如有一个耗时非常长的业务 -> 异步执行 -> 提交该channel 对应的NioEventLoop 的 taskQueue中
+        // 方案一 用户自定义任务 提交到taskQueue中
+        ctx.channel().eventLoop().execute(() -> {
+            try {
+                Thread.sleep(1000 * 2);
+                ctx.writeAndFlush(Unpooled.copiedBuffer("喵1 ", CharsetUtil.UTF_8));
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        });
+        ctx.channel().eventLoop().execute(() -> {
+            try {
+                Thread.sleep(3 * 1000);
+                ctx.writeAndFlush(Unpooled.copiedBuffer("喵2 ", CharsetUtil.UTF_8));
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        });
+
+        // 用户定时任务 提交到scheduleTaskQueue中
+        ctx.channel().eventLoop().schedule(() -> {
+            try {
+                Thread.sleep(2 * 1000);
+                ctx.writeAndFlush(Unpooled.copiedBuffer("喵3 ", CharsetUtil.UTF_8));
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }, 5, TimeUnit.SECONDS);
     }
 
     /**

@@ -27,7 +27,7 @@ public class NettyClientHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         ByteBuf message = (ByteBuf) msg;
-        System.out.println(message.toString(CharsetUtil.UTF_8));
+        System.out.println("服务端回复消息：" + message.toString(CharsetUtil.UTF_8));
         System.out.println("服务器的地址：" + ctx.channel().remoteAddress());
     }
 
