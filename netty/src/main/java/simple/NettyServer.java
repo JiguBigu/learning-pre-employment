@@ -58,6 +58,8 @@ public class NettyServer {
                     }
                 }
             });
+            // 通过channelFuture 拿到bootstrap 配置
+            channelFuture.channel().config().getOptions().forEach((key, value) -> System.out.println(String.format("key: %s, value: %s", key, value)));
             //对关闭通道进行监听
             channelFuture.channel().closeFuture().sync();
         } finally {

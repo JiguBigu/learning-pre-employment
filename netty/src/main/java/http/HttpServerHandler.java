@@ -8,6 +8,7 @@ import io.netty.handler.codec.http.*;
 import io.netty.util.CharsetUtil;
 
 import java.net.URI;
+import java.util.Scanner;
 
 /**
  * @author Jigubigu
