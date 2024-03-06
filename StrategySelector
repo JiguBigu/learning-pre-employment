@@ -1,0 +1,3 @@
+public interface StrategySelector {
+    <T extends Strategy> T select(Class<T> type, Object conditon);
+}
