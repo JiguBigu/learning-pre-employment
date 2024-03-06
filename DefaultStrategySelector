@@ -1,0 +1,99 @@
+package org.infrastructure.strategy;
+
+import com.sun.istack.internal.NotNull;
+
+import javax.annotation.PostConstruct;
+import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Optional;
+
+public class DefaultStrategySelector implements StrategySelector, BeanPostProcessor {
+    private HashMap<Class, Collection<Strategy>> strategyListMap;
+
+    @PostConstruct
+    public void init() {
+        strategyListMap = new HashMap<>(16);
+    }
+
+    @Override
+    public <T extends Strategy> T select(@NotNull Class<T> type, @NotNull Object condition) {
+        Collection<Strategy> strategies = strategyListMap.get(type);
+        if (strategies == null) {
+            throw new RuntimeException(MessageFormat.format("strategy os {0} on condition {1} not found", type.getName(), condition));
+        }
+
+        for(Strategy strategy: strategies) {
+            if (strategy.supports(condition)) {
+                return (T) strategy;
+            }
+        }
+    }
+
+    @Override
+    public Object postProcessBeforeInitialization(Object o, String s) {
+        return o;
+    }
+
+    @Override
+    public Object postProcessAfterInitialization(Object bean, String s) {
+        if (!(bean instanceof Strategy)) {
+            return bean;
+        }
+        Class clazz = getFatherInterface(bean);
+        if (clazz == null) {
+            return bean;
+        }
+        System.out.println(MessageFormat.format("register class {0} of interface {1}", bean.getClass().getName(), clazz.getName()));
+        putStrategyInternal(clazz, (Strategy) bean);
+        return bean;
+
+    }
+
+    private Class getFatherInterface(Object bean) {
+        if (!(bean instanceof Strategy)) {
+            return null;
+        }
+        Class result = getFatherInterfaceInternal(bean.getClass());
+        if (result != null) {
+            return result;
+        }
+        if (isProxiedBySpring(bean)) {
+            Class fatherClass = bean.getClass().getSuperclass();
+            return  getFatherInterfaceInternal(fatherClass);
+        }
+        return null;
+    }
+
+    private Class getFatherInterfaceInternal(Class arg0) {
+        Class[] temFatherInterfaces = Optional.ofNullable(arg0).map(Class::getInterfaces).orElse(null);
+        if (temFatherInterfaces == null || temFatherInterfaces.length == 0) {
+            if (!arg0.getSuperclass().equals(Object.class)) {
+                return getFatherInterfaceInternal(arg0.getSuperclass());
+            }
+            return null;
+        }
+        for (Class clazz :temFatherInterfaces) {
+            if (Strategy.class.isAssignableFrom(clazz) && !clazz.equals(Strategy.class)) {
+                return clazz;
+            }
+        }
+        return null;
+    }
+
+    private boolean isProxiedBySpring(Object bean) {
+        return bean instanceof SpringProxy;
+    }
+
+    private synchronized void putStrategyInternal(Class clazz, Strategy strategy) {
+        Collection<Strategy> strategies = strategyListMap.get(clazz);
+        if (strategies != null) {
+            strategies.add(strategy);
+            return;
+        }
+        strategies = new ArrayList<>();
+        strategies.add(strategy);
+        strategyListMap.put((Strategy) clazz);
+    }
+}
